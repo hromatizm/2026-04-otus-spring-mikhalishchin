@@ -1,4 +1,6 @@
 target/
+*.class
+*.mvn
 
 ### STS ###
 .apt_generated
