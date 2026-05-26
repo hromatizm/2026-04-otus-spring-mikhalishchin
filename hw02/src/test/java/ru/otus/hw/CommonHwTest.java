@@ -1,4 +1,4 @@
-package ru.otus.hw2;
+package ru.otus.hw;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,8 +7,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import ru.otus.hw.Application;
-import ru.otus.hw2.config.AppProperties2;
+import ru.otus.hw.config.AppProperties;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -21,7 +20,7 @@ class CommonHwTest {
 
     @Test
     void shouldNotContainConfigurationAnnotationAboveItSelf() {
-        assertThat(AppProperties2.class.isAnnotationPresent(Configuration.class))
+        assertThat(AppProperties.class.isAnnotationPresent(Configuration.class))
                 .withFailMessage("Класс свойств не является конфигурацией т.к. " +
                         "конфигурация для создания бинов, а тут просто компонент группирующий свойства приложения")
                 .isFalse();
@@ -29,7 +28,7 @@ class CommonHwTest {
 
     @Test
     void shouldNotContainPropertySourceAnnotationAboveItSelf() {
-        assertThat(AppProperties2.class.isAnnotationPresent(PropertySource.class))
+        assertThat(AppProperties.class.isAnnotationPresent(PropertySource.class))
                 .withFailMessage("Аннотацию @PropertySource лучше вешать над конфигурацией, " +
                         "а класс свойств ей не является")
                 .isFalse();
