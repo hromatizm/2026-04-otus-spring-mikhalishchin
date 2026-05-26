@@ -8,4 +8,12 @@ public interface IOService {
     void printFormattedLine(String s, Object ...args);
 
     void printQuestion(Question question);
+
+    String readString();
+
+    String readStringWithPrompt(String prompt);
+
+    int readIntForRange(int min, int max, String errorMessage);
+
+    int readIntForRangeWithPrompt(int min, int max, String prompt, String errorMessage);
 }
