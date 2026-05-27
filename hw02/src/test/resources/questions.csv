@@ -1,6 +1,6 @@
 #
 Question_1?;Answer_1_1%true|Answer_1_2%false|Answer_1_3%false
-Question_2?;Answer_2_1%true|Answer_2_2%false|Answer_2_3%false|Answer_2_4%false
+Question_2?;Answer_2_1%false|Answer_2_2%true|Answer_2_3%false|Answer_2_4%false
 Question_3?;Answer_3_1%true|Answer_3_2%false|Answer_3_3%false
-Question_4?;Answer_4_1%true|Answer_4_2%false|Answer_4_3%false|Answer_4_4%false
+Question_4?;Answer_4_1%false|Answer_4_2%true|Answer_4_3%false|Answer_4_4%false`
 Question_5?;Answer_5_1%true|Answer_5_2%false|Answer_5_3%false
