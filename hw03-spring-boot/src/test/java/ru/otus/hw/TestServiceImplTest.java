@@ -3,15 +3,15 @@ package ru.otus.hw;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import ru.otus.hw.dao.CsvQuestionDao;
 import ru.otus.hw.domain.Answer;
 import ru.otus.hw.domain.Question;
 import ru.otus.hw.domain.Student;
-import ru.otus.hw.service.IOService;
-import ru.otus.hw.service.TestService;
+import ru.otus.hw.service.LocalizedIOServiceImpl;
+import ru.otus.hw.service.TestServiceImpl;
 
 import java.util.List;
 
@@ -21,13 +21,13 @@ import static org.mockito.Mockito.*;
 public class TestServiceImplTest {
 
     @MockitoBean
-    private IOService ioService;
+    CsvQuestionDao csvQuestionDao;
 
     @MockitoBean
-    private CsvQuestionDao csvQuestionDao;
+    LocalizedIOServiceImpl localizedIOService;
 
-    @InjectMocks
-    private TestService testService;
+    @Autowired
+    TestServiceImpl testService;
 
     @Test
     @DisplayName("Should print answers in correct order")
@@ -61,17 +61,17 @@ public class TestServiceImplTest {
         when(csvQuestionDao.findAll()).thenReturn(
                 List.of(question1, question2, question3)
         );
-        when(ioService.readIntForRange(anyInt(), anyInt(), anyString())).thenReturn(2);
+        when(localizedIOService.readIntForRange(anyInt(), anyInt(), anyString())).thenReturn(2);
 
         // Act
         testService.executeTestFor(student);
 
         // Assert
-        InOrder inOrder = inOrder(ioService);
-        inOrder.verify(ioService).printFormattedLine("Please answer the questions below%n");
+        InOrder inOrder = inOrder(localizedIOService);
+        inOrder.verify(localizedIOService).printLineLocalized("TestService.answer.the.questions");
 
-        inOrder.verify(ioService).printQuestion(question1);
-        inOrder.verify(ioService).printQuestion(question2);
-        inOrder.verify(ioService).printQuestion(question3);
+        inOrder.verify(localizedIOService).printQuestion(question1);
+        inOrder.verify(localizedIOService).printQuestion(question2);
+        inOrder.verify(localizedIOService).printQuestion(question3);
     }
 }

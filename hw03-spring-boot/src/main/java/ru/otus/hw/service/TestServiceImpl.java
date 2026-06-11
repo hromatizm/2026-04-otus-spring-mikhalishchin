@@ -25,6 +25,7 @@ public class TestServiceImpl implements TestService {
         var testResult = new TestResult(student);
 
         for (var question: questions) {
+            ioService.printQuestion(question);
             var answer = readAnswer(question);
             var isAnswerValid = question.answers().get(answer - 1).isCorrect();
             testResult.applyAnswer(question, isAnswerValid);
