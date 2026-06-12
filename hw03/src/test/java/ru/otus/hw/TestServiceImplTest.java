@@ -1,5 +1,6 @@
 package ru.otus.hw;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -10,8 +11,7 @@ import ru.otus.hw.dao.CsvQuestionDao;
 import ru.otus.hw.domain.Answer;
 import ru.otus.hw.domain.Question;
 import ru.otus.hw.domain.Student;
-import ru.otus.hw.service.LocalizedIOServiceImpl;
-import ru.otus.hw.service.TestServiceImpl;
+import ru.otus.hw.service.*;
 
 import java.util.List;
 
@@ -20,14 +20,18 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 public class TestServiceImplTest {
 
-    @MockitoBean
-    CsvQuestionDao csvQuestionDao;
+    private LocalizedIOService localizedIOService;
 
-    @MockitoBean
-    LocalizedIOServiceImpl localizedIOService;
+    private CsvQuestionDao csvQuestionDao;
 
-    @Autowired
-    TestServiceImpl testService;
+    private TestService testService;
+
+    @BeforeEach
+    void setUp() {
+        localizedIOService = mock(LocalizedIOService.class);
+        csvQuestionDao = mock(CsvQuestionDao.class);
+        testService = new TestServiceImpl(localizedIOService, csvQuestionDao);
+    }
 
     @Test
     @DisplayName("Should print answers in correct order")
@@ -70,8 +74,8 @@ public class TestServiceImplTest {
         InOrder inOrder = inOrder(localizedIOService);
         inOrder.verify(localizedIOService).printLineLocalized("TestService.answer.the.questions");
 
-        inOrder.verify(localizedIOService).printQuestion(question1);
-        inOrder.verify(localizedIOService).printQuestion(question2);
-        inOrder.verify(localizedIOService).printQuestion(question3);
+        inOrder.verify(localizedIOService).printQuestionLocalized(question1);
+        inOrder.verify(localizedIOService).printQuestionLocalized(question2);
+        inOrder.verify(localizedIOService).printQuestionLocalized(question3);
     }
 }

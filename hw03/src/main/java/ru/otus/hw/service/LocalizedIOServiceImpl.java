@@ -23,8 +23,18 @@ public class LocalizedIOServiceImpl implements LocalizedIOService {
     }
 
     @Override
-    public void printQuestion(Question question) {
-        ioService.printQuestion(question);
+    public void printQuestionLocalized(Question question) {
+        printFormattedLineLocalized("Print.Question");
+        printFormattedLine("    %s", question.text());
+        printFormattedLineLocalized("Print.Answers");
+
+        for (int i = 0; i < question.answers().size(); i++) {
+            String answer = question.answers().get(i).text();
+            int answerNum = i + 1;
+            printFormattedLine("    %d) %s", answerNum, answer);
+        }
+
+        printLine("");
     }
 
     @Override
@@ -72,7 +82,7 @@ public class LocalizedIOServiceImpl implements LocalizedIOService {
         return ioService.readIntForRangeWithPrompt(min, max,
                 localizedMessagesService.getMessage(promptCode),
                 localizedMessagesService.getMessage(errorMessageCode)
-                );
+        );
     }
 
     @Override
