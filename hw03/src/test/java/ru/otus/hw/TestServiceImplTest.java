@@ -65,7 +65,7 @@ public class TestServiceImplTest {
         when(csvQuestionDao.findAll()).thenReturn(
                 List.of(question1, question2, question3)
         );
-        when(localizedIOService.readIntForRange(anyInt(), anyInt(), anyString())).thenReturn(2);
+        when(localizedIOService.readIntForRangeLocalized(anyInt(), anyInt(), anyString())).thenReturn(2);
 
         // Act
         testService.executeTestFor(student);
