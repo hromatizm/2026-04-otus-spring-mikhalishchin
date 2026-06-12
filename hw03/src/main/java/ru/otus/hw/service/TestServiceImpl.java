@@ -36,7 +36,7 @@ public class TestServiceImpl implements TestService {
     private int readAnswer(Question question) {
         var minAnswer = 1;
         var maxAnswer = question.answers().size();
-        var errorMessage = "Answer number is out of the range";
-        return ioService.readIntForRange(minAnswer, maxAnswer, errorMessage);
+        var errorMessage = "TestService.answer.number.is.out.of.the.range";
+        return ioService.readIntForRangeLocalized(minAnswer, maxAnswer, errorMessage);
     }
 }
