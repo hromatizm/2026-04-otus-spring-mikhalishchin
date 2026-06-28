@@ -11,3 +11,4 @@
 hw01 - Домашнее задание 1 (xml-config)
 hw02 - Домашнее задание 2 (annotation-config)
 hw03 - Домашнее задание 3 (spring-boot)
+hw04 - Домашнее задание 4 (spring-shell)
