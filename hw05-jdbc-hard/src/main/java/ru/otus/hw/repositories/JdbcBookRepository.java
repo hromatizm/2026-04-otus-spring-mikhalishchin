@@ -6,16 +6,22 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Author;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -98,136 +104,157 @@ public class JdbcBookRepository implements BookRepository {
         return new ArrayList<>();
     }
 
-    private void mergeBooksInfo(List<Book> booksWithoutGenres, List<Genre> genres,
-                                List<BookGenreRelation> relations) {
+    private void mergeBooksInfo(List<Book> booksWithoutGenres, List<Genre> genres, List<BookGenreRelation> relations) {
         Map<Long, Genre> genresMap = genres.stream()
                 .collect(Collectors.toMap(Genre::getId, Function.identity()));
-        Map<Long, List<BookGenreRelation>> relationGroups =
-                relations.stream().collect(Collectors.groupingBy(BookGenreRelation::bookId));
-        // Добавить книгам (booksWithoutGenres) жанры (genres) в соответствии со связями (relations)
+        Map<Long, List<BookGenreRelation>> relationGroups = relations.stream()
+                .collect(Collectors.groupingBy(BookGenreRelation::bookId));
         booksWithoutGenres.forEach(book -> {
             var group = relationGroups.get(book.getId());
             if (group != null) {
-                extracted(book, group, genresMap);
+                var genresToAdd = group.stream()
+                        .map(relation -> genresMap.get(relation.genreId()))
+                        .filter(Objects::nonNull)
+                        .toList();
+                var bookGenresSet = new HashSet<>(book.getGenres());
+                bookGenresSet.addAll(genresToAdd);
+                book.setGenres(new ArrayList<>(bookGenresSet));
             }
         });
     }
 
-    private static void extracted(Book book, List<BookGenreRelation> group, Map<Long, Genre> genresMap) {
-        book.getGenres()
-                .addAll(group.stream()
-                        .map(relation -> genresMap.get(relation.genreId()))
-                        .toList()
-                );
-    });
+    private Book insert(Book book) {
+        var keyHolder = new GeneratedKeyHolder();
+        var sql = """
+                INSERT INTO books (title, author_id)
+                VALUES (:title, :authorId)
+                """;
+        var params = new MapSqlParameterSource();
+        params.addValue("title", book.getTitle());
+        params.addValue("authorId", book.getAuthor().getId());
+        jdbcTemplate.update(sql, params, keyHolder);
 
-
-}
-
-private Book insert(Book book) {
-    var keyHolder = new GeneratedKeyHolder();
-    var sql = """
-            INSERT INTO books (title, author_id)
-            VALUES (:title, :authorId)
-            """;
-    var params = new MapSqlParameterSource();
-    params.addValue("title", book.getTitle());
-    params.addValue("authorId", book.getAuthor().getId());
-    jdbcTemplate.update(sql, params, keyHolder);
-
-    //noinspection DataFlowIssue
-    book.setId(keyHolder.getKeyAs(Long.class));
-    batchInsertGenresRelationsFor(book);
-    return book;
-}
-
-private Book update(Book book) {
-    checkExistence(book);
-    executeUpdate(book);
-    removeGenresRelationsFor(book);
-    batchInsertGenresRelationsFor(book);
-
-    return book;
-}
-
-private void executeUpdate(Book book) {
-    var sql = """
-            UPDATE books
-            SET title = :title, author_id = :author_id
-            WHERE id = :id
-            """;
-    var params = Map.of(
-            "title", book.getTitle(),
-            "author_id", book.getAuthor().getId()
-    );
-    jdbcTemplate.update(sql, params);
-}
-
-private void checkExistence(Book book) {
-    var findSql = "SELECT id FROM books WHERE id = :id";
-    var params = Map.of("id", book.getId());
-    var id = jdbcTemplate.queryForObject(findSql, params, Long.class);
-    if (id == null) {
-        throw new EntityNotFoundException("Book with id " + book.getId() + " not found");
+        //noinspection DataFlowIssue
+        book.setId(keyHolder.getKeyAs(Long.class));
+        batchInsertGenresRelationsFor(book);
+        return book;
     }
-}
 
-private void batchInsertGenresRelationsFor(Book book) {
-    // Использовать метод batchUpdate
-}
-
-private void removeGenresRelationsFor(Book book) {
-    //...
-}
-
-private static class BookRowMapper implements RowMapper<Book> {
-
-    @Override
-    public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new Book(
-                rs.getLong("id"),
-                rs.getString("title"),
-                new Author(
-                        rs.getLong("author_id"),
-                        rs.getString("author_full_name")
-                ),
-                Collections.emptyList()
-        );
-    }
-}
-
-@SuppressWarnings("ClassCanBeRecord")
-@RequiredArgsConstructor
-private static class BookResultSetExtractor implements ResultSetExtractor<Book> {
-
-    @Override
-    public Book extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Book book = null;
-        List<Genre> genres = new ArrayList<>();
-
-        while (rs.next()) {
-            if (book == null) {
-                book = new Book(
-                        rs.getLong("id"),
-                        rs.getString("title"),
-                        new Author(
-                                rs.getLong("author_id"),
-                                rs.getString("author_full_name")
-                        ),
-                        genres
-                );
-            }
-
-            long genreId = rs.getLong("genre_id");
-            if (!rs.wasNull()) {
-                genres.add(new Genre(genreId, rs.getString("genre_name")));
-            }
-        }
+    private Book update(Book book) {
+        checkExistence(book);
+        executeUpdate(book);
+        removeGenresRelationsFor(book);
+        batchInsertGenresRelationsFor(book);
 
         return book;
     }
-}
 
-private record BookGenreRelation(long bookId, long genreId) {
-}
+    private void executeUpdate(Book book) {
+        var sql = """
+                UPDATE books
+                SET title = :title, author_id = :author_id
+                WHERE id = :id
+                """;
+        var params = Map.of(
+                "title", book.getTitle(),
+                "author_id", book.getAuthor().getId(),
+                "id", book.getId()
+        );
+        jdbcTemplate.update(sql, params);
+    }
+
+    private void checkExistence(Book book) {
+        var findSql = """
+                SELECT id
+                FROM books
+                WHERE id = :id
+                """;
+        var params = Map.of("id", book.getId());
+        var id = jdbcTemplate.queryForObject(findSql, params, Long.class);
+        if (id == null) {
+            throw new EntityNotFoundException("Book with id " + book.getId() + " not found");
+        }
+    }
+
+    private void batchInsertGenresRelationsFor(Book book) {
+        var bookGenres = book.getGenres();
+        if (bookGenres == null || bookGenres.isEmpty()) {
+            return;
+        }
+        var sql = """
+                INSERT INTO books_genres (book_id, genre_id)
+                VALUES (:book_id, :genre_id)
+                """;
+        SqlParameterSource[] params = bookGenres.stream()
+                .map(genre -> new MapSqlParameterSource()
+                        .addValue("book_id", book.getId())
+                        .addValue("genre_id", genre.getId()))
+                .toArray(SqlParameterSource[]::new);
+
+        jdbcTemplate.batchUpdate(sql, params);
+    }
+
+    private void removeGenresRelationsFor(Book book) {
+        var bookGenres = book.getGenres();
+        if (bookGenres == null || bookGenres.isEmpty()) {
+            return;
+        }
+        var sql = """
+                DELETE FROM books_genres
+                WHERE book_id = :book_id
+                """;
+        var params = Map.of("book_id", book.getId());
+        jdbcTemplate.update(sql, params);
+    }
+
+    private static class BookRowMapper implements RowMapper<Book> {
+
+        @Override
+        public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new Book(
+                    rs.getLong("id"),
+                    rs.getString("title"),
+                    new Author(
+                            rs.getLong("author_id"),
+                            rs.getString("author_full_name")
+                    ),
+                    Collections.emptyList()
+            );
+        }
+    }
+
+    @SuppressWarnings("ClassCanBeRecord")
+    @RequiredArgsConstructor
+    private static class BookResultSetExtractor implements ResultSetExtractor<Book> {
+
+        @Override
+        public Book extractData(ResultSet rs) throws SQLException, DataAccessException {
+            Book book = null;
+            List<Genre> genres = new ArrayList<>();
+
+            while (rs.next()) {
+                if (book == null) {
+                    book = new Book(
+                            rs.getLong("id"),
+                            rs.getString("title"),
+                            new Author(
+                                    rs.getLong("author_id"),
+                                    rs.getString("author_full_name")
+                            ),
+                            genres
+                    );
+                }
+
+                long genreId = rs.getLong("genre_id");
+                if (!rs.wasNull()) {
+                    genres.add(new Genre(genreId, rs.getString("genre_name")));
+                }
+            }
+
+            return book;
+        }
+    }
+
+    private record BookGenreRelation(long bookId, long genreId) {
+    }
 }
