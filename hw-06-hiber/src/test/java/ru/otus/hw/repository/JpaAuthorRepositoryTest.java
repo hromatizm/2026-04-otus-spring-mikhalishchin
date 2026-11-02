@@ -10,7 +10,6 @@ import ru.otus.hw.models.Author;
 import ru.otus.hw.repositories.JpaAuthorRepository;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("Сервис для работы с книгами ")
+@DisplayName("Сервис для работы с книгами")
 @SpringBootTest
 @Import({JpaBookRepository.class, JpaGenreRepository.class, BookServiceImpl.class})
 public class BookServiceTest {

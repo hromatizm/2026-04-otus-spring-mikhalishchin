@@ -27,6 +27,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Import({JpaBookRepository.class, JpaGenreRepository.class})
 class JpaBookRepositoryTest {
 
+    private static final long NON_EXISTING_ID = 100L;
+
     @Autowired
     private JpaBookRepository repositoryJpa;
 
@@ -116,12 +118,12 @@ class JpaBookRepositoryTest {
     @DisplayName("должен кинуть исключение при обновлении несуществующей книги")
     @Test
     void shouldThrowWhileUpdateIfNotFound() {
-        var bookId = 10L;
+        var bookId = NON_EXISTING_ID;
         var existingBook = em.find(Book.class, bookId);
 
         assertThat(existingBook).isNull();
 
-        var expectedBook = new Book(10L, "BookTitle_10500", dbAuthors.get(2),
+        var expectedBook = new Book(NON_EXISTING_ID, "BookTitle_10500", dbAuthors.get(2),
                 List.of(dbGenres.get(4), dbGenres.get(5)));
 
         assertThatThrownBy(() -> repositoryJpa.save(expectedBook))
