@@ -15,7 +15,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class JpaBookRepository implements BookRepository {
 
-    private static final String GRAPH_HINT = "jakarta.persistence.fetchgraph";
+    private static final String GRAPH_HINT = "jakarta.persistence.loadgraph";
 
     private static final String BOOK_AUTHOR_GRAPH = "book-author-entity-graph";
 

@@ -1,4 +1,4 @@
-package ru.otus.hw.models;
+package ru.otus.hw.repository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,9 +7,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import ru.otus.hw.models.Genre;
 import ru.otus.hw.repositories.JpaGenreRepository;
 
 import java.util.HashSet;
@@ -64,9 +64,14 @@ class JpaGenreRepositoryTest {
     }
 
     private static Map<Long, Genre> getDbGenres() {
-        return IntStream.range(1, 7).boxed()
-                .map(id -> new Genre(id, "Genre_" + id))
-                .collect(Collectors.toMap(Genre::getId, Function.identity()));
+        return Map.of(
+                1L, new Genre(1L, "Genre_1"),
+                2L, new Genre(2L, "Genre_2"),
+                3L, new Genre(3L, "Genre_3"),
+                4L, new Genre(4L, "Genre_4"),
+                5L, new Genre(5L, "Genre_5"),
+                6L, new Genre(6L, "Genre_6")
+        );
     }
 
     private List<Genre> getDbGenresByIds(List<Long> ids) {

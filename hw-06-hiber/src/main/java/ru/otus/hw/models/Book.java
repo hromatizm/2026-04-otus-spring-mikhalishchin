@@ -1,6 +1,5 @@
 package ru.otus.hw.models;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -47,9 +46,7 @@ public class Book {
     @JoinColumn(name = "author_id")
     private Author author;
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
     @JoinTable(name = "books_genres",
             joinColumns = @JoinColumn(name = "book_id"),
