@@ -6,11 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import ru.otus.hw.models.Author;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
+import ru.otus.hw.repositories.JpaAuthorRepository;
 import ru.otus.hw.repositories.JpaBookRepository;
 import ru.otus.hw.repositories.JpaGenreRepository;
 import ru.otus.hw.services.BookService;
@@ -23,23 +26,20 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Сервис для работы с книгами")
-@SpringBootTest
-@Import({JpaBookRepository.class, JpaGenreRepository.class, BookServiceImpl.class})
+@DataJpaTest
+@Import({JpaBookRepository.class, JpaGenreRepository.class, JpaAuthorRepository.class, BookServiceImpl.class})
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class BookServiceTest {
 
     @Autowired
     private BookService bookService;
 
-    private List<Author> dbAuthors;
-
-    private List<Genre> dbGenres;
-
     private List<Book> dbBooks;
 
     @BeforeEach
     void setUp() {
-        dbAuthors = getDbAuthors();
-        dbGenres = getDbGenres();
+        List<Author> dbAuthors = getDbAuthors();
+        List<Genre> dbGenres = getDbGenres();
         dbBooks = getDbBooks(dbAuthors, dbGenres);
     }
 
@@ -68,7 +68,7 @@ public class BookServiceTest {
                 .zipSatisfy(expectedBooks, BookServiceTest::assertBooksEquals);
     }
 
-    private static void assertBooksEquals(Book actualBook, Book expectedBook){
+    private static void assertBooksEquals(Book actualBook, Book expectedBook) {
         assertThat(actualBook.getId())
                 .isEqualTo(expectedBook.getId());
 
@@ -89,6 +89,7 @@ public class BookServiceTest {
                                 .toList()
                 );
     }
+
     private static List<Author> getDbAuthors() {
         return List.of(
                 new Author(1L, "Author_1"),

@@ -5,8 +5,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Comment;
 import ru.otus.hw.repositories.JpaBookRepository;
@@ -20,8 +22,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Сервис для работы с комментариями")
-@SpringBootTest
+@DataJpaTest
 @Import({JpaBookRepository.class, JpaCommentRepository.class, CommentServiceImpl.class})
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class CommentServiceTest {
 
     @Autowired

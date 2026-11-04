@@ -20,8 +20,3 @@ spring:
       path: /h2-console
       settings:
         web-allow-others: true
-
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
