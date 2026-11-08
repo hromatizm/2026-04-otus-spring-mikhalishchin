@@ -1,6 +1,7 @@
 package ru.otus.hw.service;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -9,10 +10,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Comment;
-import ru.otus.hw.repositories.JpaBookRepository;
-import ru.otus.hw.repositories.JpaCommentRepository;
 import ru.otus.hw.services.CommentService;
 import ru.otus.hw.services.CommentServiceImpl;
 
@@ -20,12 +20,15 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Сервис для работы с комментариями")
 @DataJpaTest
-@Import({JpaBookRepository.class, JpaCommentRepository.class, CommentServiceImpl.class})
+@Import(CommentServiceImpl.class)
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class CommentServiceTest {
+
+    private final static long NON_EXISTING_ID = 100L;
 
     @Autowired
     private CommentService commentService;
@@ -40,6 +43,11 @@ public class CommentServiceTest {
         assertThat(actualComment)
                 .isEqualTo(expectedComment)
                 .usingRecursiveComparison();
+
+        var book = actualComment.getBook();
+        assertThat(book.getTitle()).isNotNull();
+        assertThat(book.getAuthor()).isNotNull();
+        assertThat(book.getGenres()).isNotNull();
     }
 
     @DisplayName("должен загружать комментарии книги с инициализированной книгой")
@@ -56,6 +64,22 @@ public class CommentServiceTest {
         assertThat(actualComments)
                 .containsExactlyInAnyOrderElementsOf(expectedComments)
                 .usingRecursiveComparison();
+
+        var book = actualComments.get(0).getBook();
+        assertThat(book.getTitle()).isNotNull();
+        assertThat(book.getAuthor()).isNotNull();
+        assertThat(book.getGenres()).isNotNull();
+    }
+
+    @DisplayName("должен выбрасывать исключение при обновлении отсутствующего комментария")
+    @Test
+    void shouldThrowIfUpdatedCommentNotFound() {
+        assertThatThrownBy(() -> commentService.update(NON_EXISTING_ID, "Updated comment"))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage(
+                        "Comment with id %d not found"
+                                .formatted(NON_EXISTING_ID)
+                );
     }
 
     private static List<Comment> getDbComments() {

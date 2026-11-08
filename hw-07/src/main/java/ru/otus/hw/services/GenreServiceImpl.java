@@ -23,6 +23,6 @@ public class GenreServiceImpl implements GenreService {
     @Override
     @Transactional(readOnly = true)
     public List<Genre> findAllByIds(Set<Long> ids) {
-        return genreRepository.findAllByIds(ids);
+        return genreRepository.findAllById(ids);
     }
 }

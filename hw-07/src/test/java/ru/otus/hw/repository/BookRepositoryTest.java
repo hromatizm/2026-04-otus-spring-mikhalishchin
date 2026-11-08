@@ -8,13 +8,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Author;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
-import ru.otus.hw.repositories.JpaBookRepository;
-import ru.otus.hw.repositories.JpaGenreRepository;
+import ru.otus.hw.repositories.BookRepository;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -22,15 +20,14 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DisplayName("Репозиторий на основе Jpa для работы с книгами ")
+@DisplayName("Репозиторий для работы с книгами")
 @DataJpaTest
-@Import({JpaBookRepository.class, JpaGenreRepository.class})
-class JpaBookRepositoryTest {
+class BookRepositoryTest {
 
     private static final long NON_EXISTING_ID = 100L;
 
     @Autowired
-    private JpaBookRepository repositoryJpa;
+    private BookRepository bookRepository;
 
     @Autowired
     private TestEntityManager em;
@@ -52,7 +49,7 @@ class JpaBookRepositoryTest {
     @ParameterizedTest
     @MethodSource("getDbBooks")
     void shouldReturnCorrectBookById(Book expectedBook) {
-        var actualBook = repositoryJpa.findById(expectedBook.getId());
+        var actualBook = bookRepository.findById(expectedBook.getId());
         assertThat(actualBook).isPresent()
                 .get()
                 .isEqualTo(expectedBook);
@@ -61,7 +58,7 @@ class JpaBookRepositoryTest {
     @DisplayName("должен загружать список всех книг")
     @Test
     void shouldReturnCorrectBooksList() {
-        var actualBooks = repositoryJpa.findAll();
+        var actualBooks = bookRepository.findAll();
         var expectedBooks = dbBooks;
 
         assertThat(actualBooks).containsExactlyElementsOf(expectedBooks);
@@ -72,7 +69,7 @@ class JpaBookRepositoryTest {
     void shouldSaveNewBook() {
         var expectedBook = new Book(0, "BookTitle_10500", dbAuthors.get(0),
                 List.of(dbGenres.get(0), dbGenres.get(2)));
-        var returnedBook = repositoryJpa.save(expectedBook);
+        var returnedBook = bookRepository.save(expectedBook);
         assertThat(returnedBook).isNotNull()
                 .matches(book -> book.getId() > 0)
                 .usingRecursiveComparison()
@@ -99,7 +96,7 @@ class JpaBookRepositoryTest {
                 .isNotNull()
                 .isNotEqualTo(expectedBook);
 
-        var returnedBook = repositoryJpa.save(expectedBook);
+        var returnedBook = bookRepository.save(expectedBook);
         assertThat(returnedBook).isNotNull()
                 .matches(book -> book.getId() > 0)
                 .usingRecursiveComparison()
@@ -115,22 +112,6 @@ class JpaBookRepositoryTest {
                 .isEqualTo(returnedBook);
     }
 
-    @DisplayName("должен кинуть исключение при обновлении несуществующей книги")
-    @Test
-    void shouldThrowWhileUpdateIfNotFound() {
-        var bookId = NON_EXISTING_ID;
-        var existingBook = em.find(Book.class, bookId);
-
-        assertThat(existingBook).isNull();
-
-        var expectedBook = new Book(NON_EXISTING_ID, "BookTitle_10500", dbAuthors.get(2),
-                List.of(dbGenres.get(4), dbGenres.get(5)));
-
-        assertThatThrownBy(() -> repositoryJpa.save(expectedBook))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("Book with id %d not found".formatted(bookId));
-    }
-
     @DisplayName("должен удалять книгу по id ")
     @Test
     void shouldDeleteBook() {
@@ -138,7 +119,7 @@ class JpaBookRepositoryTest {
         var existingBook = em.find(Book.class, bookId);
 
         assertThat(existingBook).isNotNull();
-        repositoryJpa.deleteById(bookId);
+        bookRepository.deleteById(bookId);
 
         var deletedBook = em.find(Book.class, bookId);
         assertThat(deletedBook).isNull();

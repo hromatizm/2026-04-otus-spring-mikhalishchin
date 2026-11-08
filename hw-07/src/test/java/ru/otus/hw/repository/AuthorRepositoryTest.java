@@ -5,18 +5,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
 import ru.otus.hw.models.Author;
-import ru.otus.hw.repositories.JpaAuthorRepository;
+import ru.otus.hw.repositories.AuthorRepository;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("Репозиторий на основе JPA для работы с авторами ")
+@DisplayName("Репозиторий для работы с авторами")
 @DataJpaTest
-@Import(JpaAuthorRepository.class)
-class JpaAuthorRepositoryTest {
+class AuthorRepositoryTest {
 
     private List<Author> dbAuthors;
 
@@ -26,12 +24,12 @@ class JpaAuthorRepositoryTest {
     }
 
     @Autowired
-    private JpaAuthorRepository repositoryJpa;
+    private AuthorRepository authorRepository;
 
     @DisplayName("должен загружать список всех авторов")
     @Test
     void shouldReturnAllAuthors() {
-        var actual = repositoryJpa.findAll();
+        var actual = authorRepository.findAll();
 
         assertThat(actual).containsExactlyElementsOf(dbAuthors);
     }
@@ -40,7 +38,7 @@ class JpaAuthorRepositoryTest {
     @Test
     void shouldReturnCorrectAuthorById() {
         for (var expected : dbAuthors) {
-            var actual = repositoryJpa.findById(expected.getId());
+            var actual = authorRepository.findById(expected.getId());
 
             assertThat(actual).isPresent()
                     .get()
@@ -51,7 +49,7 @@ class JpaAuthorRepositoryTest {
     @DisplayName("должен возвращать пустой Optional, если автора нет")
     @Test
     void shouldReturnEmptyIfAuthorNotFound() {
-        assertThat(repositoryJpa.findById(100L)).isEmpty();
+        assertThat(authorRepository.findById(100L)).isEmpty();
     }
 
     private static List<Author> getDbAuthors() {

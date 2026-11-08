@@ -29,7 +29,7 @@ import java.util.List;
 @Entity
 @Table(name = "books")
 @NamedEntityGraph(
-        name = "book-entity-graph",
+        name = "book-graph",
         attributeNodes = {@NamedAttributeNode("author"), @NamedAttributeNode("genres")}
 )
 public class Book {

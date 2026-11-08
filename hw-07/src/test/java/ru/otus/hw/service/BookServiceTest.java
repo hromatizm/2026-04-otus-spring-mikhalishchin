@@ -10,26 +10,27 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Author;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
-import ru.otus.hw.repositories.JpaAuthorRepository;
-import ru.otus.hw.repositories.JpaBookRepository;
-import ru.otus.hw.repositories.JpaGenreRepository;
 import ru.otus.hw.services.BookService;
 import ru.otus.hw.services.BookServiceImpl;
 
-import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Сервис для работы с книгами")
 @DataJpaTest
-@Import({JpaBookRepository.class, JpaGenreRepository.class, JpaAuthorRepository.class, BookServiceImpl.class})
+@Import(BookServiceImpl.class)
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class BookServiceTest {
+
+    private final static long NON_EXISTING_ID = 100L;
 
     @Autowired
     private BookService bookService;
@@ -53,6 +54,11 @@ public class BookServiceTest {
         assertThat(actualBook)
                 .isEqualTo(expectedBook)
                 .usingRecursiveComparison();
+
+        assertThat(actualBook.getAuthor()).isNotNull();
+        assertThat(actualBook.getTitle()).isNotNull();
+        assertThat(actualBook.getGenres().get(0).getName()).isNotNull();
+
     }
 
     @DisplayName("должен загружать список всех книг с авторами и жанрами")
@@ -63,6 +69,17 @@ public class BookServiceTest {
         assertThat(actualBooks)
                 .containsExactlyInAnyOrderElementsOf(dbBooks)
                 .usingRecursiveComparison();
+    }
+
+    @DisplayName("должен кинуть исключение при обновлении несуществующей книги")
+    @Test
+    void shouldThrowWhileUpdateIfNotFound() {
+        var authorId = 1L;
+        var genreId = 1L;
+
+        assertThatThrownBy(() -> bookService.update(NON_EXISTING_ID, "BookTitle_10500", authorId, Set.of(genreId)))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Book with id %d not found".formatted(NON_EXISTING_ID));
     }
 
     private static List<Author> getDbAuthors() {

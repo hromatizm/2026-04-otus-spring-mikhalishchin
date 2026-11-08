@@ -6,11 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Comment;
-import ru.otus.hw.repositories.JpaCommentRepository;
+import ru.otus.hw.repositories.CommentRepository;
 
 import java.util.List;
 
@@ -18,15 +17,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-@DisplayName("Репозиторий на основе JPA для работы с комментариями ")
+@DisplayName("Репозиторий для работы с комментариями")
 @DataJpaTest
-@Import(JpaCommentRepository.class)
-class JpaCommentRepositoryTest {
+class CommentRepositoryTest {
 
     private static final long NON_EXISTING_ID = 100L;
 
     @Autowired
-    private JpaCommentRepository repositoryJpa;
+    private CommentRepository commentRepository;
 
     @Autowired
     private TestEntityManager em;
@@ -42,7 +40,7 @@ class JpaCommentRepositoryTest {
     @Test
     void shouldReturnCorrectCommentById() {
         for (var expected : dbComments) {
-            var actual = repositoryJpa.findById(expected.getId());
+            var actual = commentRepository.findById(expected.getId());
 
             assertThat(actual).isPresent();
             assertThat(actual.get())
@@ -54,7 +52,7 @@ class JpaCommentRepositoryTest {
     @DisplayName("должен возвращать пустой Optional, если комментария нет")
     @Test
     void shouldReturnEmptyIfCommentNotFound() {
-        assertThat(repositoryJpa.findById(NON_EXISTING_ID)).isEmpty();
+        assertThat(commentRepository.findById(NON_EXISTING_ID)).isEmpty();
     }
 
     @DisplayName("должен загружать комментарии по id книги")
@@ -73,7 +71,7 @@ class JpaCommentRepositoryTest {
                     ))
                     .toList();
 
-            var actual = repositoryJpa.findByBookId(bookId);
+            var actual = commentRepository.findByBookId(bookId);
 
             assertThat(actual)
                     .as("Комментарии книги с id = %d", bookId)
@@ -89,7 +87,7 @@ class JpaCommentRepositoryTest {
     @DisplayName("должен возвращать пустой список для несуществующей книги")
     @Test
     void shouldReturnEmptyListForBookWithoutComments() {
-        var comments = repositoryJpa.findByBookId(NON_EXISTING_ID);
+        var comments = commentRepository.findByBookId(NON_EXISTING_ID);
 
         assertThat(comments).isEmpty();
     }
@@ -100,7 +98,7 @@ class JpaCommentRepositoryTest {
         var book = em.find(Book.class, 3L);
         var comment = new Comment(0L, "New comment", book);
 
-        var saved = repositoryJpa.save(comment);
+        var saved = commentRepository.save(comment);
         var savedId = saved.getId();
 
         assertThat(savedId).isPositive();
@@ -118,7 +116,7 @@ class JpaCommentRepositoryTest {
         var book = em.find(Book.class, 2L);
         var updatedComment = new Comment(3L, "Updated comment", book);
 
-        var saved = repositoryJpa.save(updatedComment);
+        var saved = commentRepository.save(updatedComment);
 
         assertThat(saved.getId()).isEqualTo(3L);
 
@@ -129,30 +127,12 @@ class JpaCommentRepositoryTest {
         assertThat(actual.getBook().getId()).isEqualTo(2L);
     }
 
-    @DisplayName("должен выбрасывать исключение при обновлении отсутствующего комментария")
-    @Test
-    void shouldThrowIfUpdatedCommentNotFound() {
-        var book = em.find(Book.class, 1L);
-        var comment = new Comment(
-                NON_EXISTING_ID,
-                "Updated comment",
-                book
-        );
-
-        assertThatThrownBy(() -> repositoryJpa.save(comment))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage(
-                        "Comment with id %d not found"
-                                .formatted(NON_EXISTING_ID)
-                );
-    }
-
     @DisplayName("должен удалять комментарий по id")
     @Test
     void shouldDeleteCommentById() {
         assertThat(em.find(Comment.class, 1L)).isNotNull();
 
-        repositoryJpa.deleteById(1L);
+        commentRepository.deleteById(1L);
 
         assertThat(em.find(Comment.class, 1L)).isNull();
         assertThat(em.find(Comment.class, 2L)).isNotNull();

@@ -8,9 +8,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
 import ru.otus.hw.models.Genre;
-import ru.otus.hw.repositories.JpaGenreRepository;
+import ru.otus.hw.repositories.GenreRepository;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,13 +18,12 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("Репозиторий на основе Jpa для работы с книгами ")
+@DisplayName("Репозиторий для работы с книгами")
 @DataJpaTest
-@Import({JpaGenreRepository.class})
-class JpaGenreRepositoryTest {
+class GenreRepositoryTest {
 
     @Autowired
-    private JpaGenreRepository repositoryJpa;
+    private GenreRepository genreRepository;
 
     private Map<Long, Genre> dbGenres;
 
@@ -37,7 +35,7 @@ class JpaGenreRepositoryTest {
     @DisplayName("должен получить все жанры")
     @Test
     void shouldFindAll() {
-        var actualGenres = repositoryJpa.findAll();
+        var actualGenres = genreRepository.findAll();
         assertThat(actualGenres).containsExactlyInAnyOrderElementsOf(dbGenres.values());
     }
 
@@ -45,7 +43,7 @@ class JpaGenreRepositoryTest {
     @ParameterizedTest
     @MethodSource("idsArgs")
     void shouldFindAllById(List<Long> ids) {
-        var actualGenres = repositoryJpa.findAllByIds(new HashSet<>(ids));
+        var actualGenres = genreRepository.findAllById(new HashSet<>(ids));
         var expectedGenres = getDbGenresByIds(ids);
         assertThat(actualGenres).containsExactlyInAnyOrderElementsOf(expectedGenres);
     }
